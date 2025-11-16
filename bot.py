@@ -19,6 +19,7 @@ def handle_help(message):
  /show_my_cities - показать все запомненные города
  /set_color [цвет] - установить цвет маркеров (red, blue, green, purple, orange, black)
  /current_color - показать текущий цвет маркеров
+ /show_cities_in_country [страна] - показывает 25 городов определённой страны
                      """)
 
 
@@ -72,6 +73,22 @@ def handle_show_visited_cities(message):
             bot.send_photo(message.chat.id, photo)
     else:
         bot.send_message(message.chat.id, 'У вас пока нет сохранённых городов.')
+
+@bot.message_handler(commands=['show_cities_in_country'])
+def handle_show_cities_in_country(message):
+    user_id = message.chat.id
+    parts = message.text.split(maxsplit=1)
+    if len(parts) < 2:
+        return bot.send_message(user_id, "Укажите страну: /show_cities_in_country [страна]")
+    country_name = parts[1].strip()
+    cities = manager.get_cities_in_country(country_name)
+    if not cities:
+        return bot.send_message(user_id, f"Города в '{country_name}' не найдены.")
+    color = user_colors.get(user_id, 'blue')
+    filename = f'{user_id}_country_{country_name.replace(" ", "_")}.png'
+    manager.create_grapf(filename, cities, color=color)
+    with open(filename, 'rb') as f:
+        bot.send_photo(user_id, f, caption=f"{country_name}: {len(cities)} городов")
 
 if __name__=="__main__":
     manager = DB_Map(DATABASE)

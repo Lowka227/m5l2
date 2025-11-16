@@ -18,6 +18,10 @@ class DB_Map():
                                 city_id TEXT,
                                 FOREIGN KEY(city_id) REFERENCES cities(id)
                             )''')
+            conn.execute('''CREATE TABLE IF NOT EXISTS countries (
+                            code TEXT PRIMARY KEY,
+                            name TEXT
+                        )''')
             conn.commit()
 
     def add_city(self,user_id, city_name ):
@@ -93,6 +97,20 @@ class DB_Map():
                  transform=ccrs.PlateCarree())
         plt.savefig('distance_map.png')
         plt.close()
+
+    def get_cities_in_country(self, country_name):
+        conn = sqlite3.connect(self.database)
+        with conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT city 
+                FROM cities 
+                WHERE LOWER(country) = LOWER(?)
+                ORDER BY population DESC
+            ''', (country_name,))
+            cities = [row[0] for row in cursor.fetchall()]
+        conn.close()
+        return cities[:25]
 
 
 if __name__=="__main__":
