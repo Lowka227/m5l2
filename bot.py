@@ -4,6 +4,8 @@ from logic import *
 
 bot = telebot.TeleBot(TOKEN)
 
+user_colors = {}
+
 @bot.message_handler(commands=['start'])
 def handle_start(message):
     bot.send_message(message.chat.id, "Привет! Я бот, который может показывать города на карте. Напиши /help для списка команд.")
@@ -14,16 +16,39 @@ def handle_help(message):
 Доступные команды: 
  /show_city [город] - показать город на карте
  /remember_city [город] - запомнить город
- /show_my_cities - показать все запомненные города 
+ /show_my_cities - показать все запомненные города
+ /set_color [цвет] - установить цвет маркеров (red, blue, green, purple, orange, black)
+ /current_color - показать текущий цвет маркеров
                      """)
+
+
+@bot.message_handler(commands=['set_color'])
+def handle_set_color(message):
+    user_id = message.chat.id
+    parts = message.text.split()
+    color = parts[1].lower()
+    valid_colors = ['red', 'blue', 'green', 'purple', 'orange', 'black']
+    
+    if color in valid_colors:
+        user_colors[user_id] = color
+        bot.send_message(message.chat.id, f'Цвет маркеров установлен: {color}')
+    else:
+        bot.send_message(message.chat.id, f'Неверный цвет! Доступные цвета: {", ".join(valid_colors)}')
+
+@bot.message_handler(commands=['current_color'])
+def handle_current_color(message):
+    user_id = message.chat.id
+    color = user_colors.get(user_id)
+    bot.send_message(message.chat.id, f'Текущий цвет маркеров: {color}')
 
 
 
 @bot.message_handler(commands=['show_city'])
 def handle_show_city(message):
-    city_name = message.text.split()[-1]
     user_id = message.chat.id
-    manager.create_grapf(f'{user_id}.png', [city_name])
+    city_name = message.text.split()[-1]
+    color = user_colors.get(user_id, 'blue')
+    manager.create_grapf(f'{user_id}.png', [city_name], color=color)
     with open(f'{user_id}.png', 'rb') as photo:
         bot.send_photo(message.chat.id, photo)
 
@@ -41,7 +66,8 @@ def handle_remember_city(message):
 def handle_show_visited_cities(message):
     cities = manager.select_cities(message.chat.id)
     if cities:
-        manager.create_grapf(f'{message.chat.id}_cities.png', cities)
+        color = user_colors.get(message.chat.id, 'blue')
+        manager.create_grapf(f'{message.chat.id}_cities.png', cities, color=color)
         with open(f'{message.chat.id}_cities.png', 'rb') as photo:
             bot.send_photo(message.chat.id, photo)
     else:

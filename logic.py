@@ -58,7 +58,8 @@ class DB_Map():
             coordinates = cursor.fetchone()
             return coordinates
 
-    def create_grapf(self, path, cities):
+    def create_grapf(self, path, cities, color='blue'):
+        plt.figure(figsize=(10, 5))
         ax = plt.axes(projection=ccrs.PlateCarree())
         ax.stock_img()
         for city in cities:
@@ -66,21 +67,22 @@ class DB_Map():
             if coordinates:
                 lat, lng = coordinates
                 plt.plot([lng], [lat],
-                         color = 'blue', linewidth = 1, marker = '.',
+                         color = color, linewidth = 1, marker = '.',
                          transform=ccrs.Geodetic())
                 plt.text(lng + 3, lat +12, city,
                          horizontalalignment='left',
+                         color = color,
                          transform=ccrs.PlateCarree())
         plt.savefig(path)
         plt.close()
         
-    def draw_distance(self, city1, city2):
+    def draw_distance(self, city1, city2, color='blue'):
         city1_coords = self.get_coordinates(city1)
         city2_coords = self.get_coordinates(city2)
         fig, ax = plt.subplots(subplot_kw={'projection': ccrs.PlateCarree()})
         ax.stock_img()
         plt.plot([city1_coords[1], city2_coords[1]], [city1_coords[0], city2_coords[0]],
-                 color = 'blue', linewidth = 2, marker = 'o',
+                 color = color, linewidth = 2, marker = 'o',
                  transform=ccrs.Geodetic()
                  )
         plt.text(city1_coords[1] + 3, city1_coords[0] + 12, city1,
@@ -89,8 +91,8 @@ class DB_Map():
         plt.text(city2_coords[1] + 3, city2_coords[0] + 12, city2,
                  horizontalalignment='left',
                  transform=ccrs.PlateCarree())
-    plt.savefig('distance_map.png')
-    plt.close()
+        plt.savefig('distance_map.png')
+        plt.close()
 
 
 if __name__=="__main__":
